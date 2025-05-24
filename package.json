@@ -1,0 +1,31 @@
+{
+  "name": "admaf-project",
+  "version": "1.0.0",
+  "description": "\"# admaf\"",
+  "main": "script.js",
+  "type": "module",
+  "scripts": {
+    "start": "node script.js",
+    "dev": "nodemon script.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/eslambashry/admaf.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/eslambashry/admaf/issues"
+  },
+  "homepage": "https://github.com/eslambashry/admaf#readme",
+  "dependencies": {
+    "@colors/colors": "^1.6.0",
+    "dotenv": "^16.5.0",
+    "express": "^5.1.0",
+    "mongoose": "^8.15.0",
+    "nodemailer": "^7.0.3",
+    "nodemon": "^3.1.10"
+  }
+}
