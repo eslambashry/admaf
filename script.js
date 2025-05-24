@@ -1,14 +1,18 @@
-import express from 'express'
 import path from 'path'
 import { config } from 'dotenv'
 import { databaseConnection } from './DB/connection.js'
 import color from "@colors/colors"
+import { Hono } from 'hono'
+import { serve } from '@hono/node-server'
 
 config({path:path.resolve('./config/.env')})
-const app = express()
-app.use(express.json());
-
+const app = new Hono()
 const port = process.env.PORT
-databaseConnection()
-app.get('/', (req, res) => res.send('Hello World!'))
-app.listen(port, () => console.log(`Example app listening on port ${port}`.brightBlue.bold.underline))
+
+databaseConnection() 
+serve({
+  fetch: app.fetch,
+  port: Number(port),
+}, () => {
+  console.log(`Server running on port ${port}`.yellow.bold.underline + ' 💉')
+})
