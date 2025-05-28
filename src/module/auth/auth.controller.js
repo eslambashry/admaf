@@ -9,91 +9,96 @@ import jwt from "jsonwebtoken"
 import crypto from 'crypto';
 import { userModel } from "../../../DB/models/user.js"
 
-export const signup = async(req,res,next) => {
-    console.log(req);
-    
-    const { 
+
+
+export const signup = catchError(async(c) => {
+   
+    const {
         userName,
         email,
         password,
         phoneNumber,
         role
-    } = req.body
-
-    //is email exsisted
-    const isExsisted = await userModel.findOne({email})
-    if(isExsisted){
-        return res.status(400).json({message:"Email exsisted"})
+    } = await c.req.json();
+    
+    if(!password) {
+        throw new CustomError('Password is required', 400);
+    }
+    
+    // Check if email exists
+    const isExisted = await userModel.findOne({email});
+    if(isExisted){
+        throw new CustomError('Email already exists', 400);
     }
 
-// const saltRounds = parseInt(process.env.SALT_ROUNDS) || 8;
-//         const hashedPassword = pkg.hashSync(password, saltRounds);
+    // Hash password
+    const saltRounds = parseInt(process.env.SALT_ROUNDS) || 8;
+    const hashedPassword = pkg.hashSync(password, saltRounds);
     
     const user = new userModel({
         userName,
         email,
-        password,
+        password: hashedPassword,
         phoneNumber,
         role
-    })
-    const saveUser = await user.save()
-    res.status(201).json({message:'done', saveUser})
-}
-
-
-export const login = catchError(async(req,res,next) => {
-    const {email,password} = req.body
- 
-     
-    if(!email || !password){
-        return next(new CustomError('Email And Password Is Required',  422 ))
-     }
-
-    const userExsist = await userModel.findOne({email})
-    if(!userExsist){
-        return next(new CustomError('user not found',401))
-    } 
-
-    if(userExsist.isActive == false){
-        return next(new CustomError('user is not active',401))
-    }
-
+    });
     
-    const passwordExsist = pkg.compareSync(password,userExsist.password)
- 
-    if(!passwordExsist){
-        return next(new CustomError('password incorrect',401))
-    }
+    const saveUser = await user.save();
+    return c.json({message:'User created successfully', saveUser}, 201);
+});
 
+
+
+export const login = catchError(async(c) => {
+    const {email, password} = await c.req.json();
+          
+    if(!email || !password){
+        throw new CustomError('Email And Password Is Required', 422);
+    }
+    
+    const userExist = await userModel.findOne({email});
+    if(!userExist){
+        throw new CustomError('user not found', 401);
+    }
+    
+    if(userExist.isActive == false){
+        throw new CustomError('user is not active', 401);
+    }
+       
+    const passwordExist = pkg.compareSync(password, userExist.password);
+    if(!passwordExist){
+        throw new CustomError('password incorrect', 401);
+    }
+    
     const token = generateToken({
         payload:{
             email,
-            _id: userExsist._id,
-            role: userExsist.role
+            _id: userExist._id,
+            role: userExist.role
         },
-        signature: process.env.SIGN_IN_TOKEN_SECRET || "Login", // ! process.env.SIGN_IN_TOKEN_SECRET
+        signature: process.env.SIGN_IN_TOKEN_SECRET || "Login",
         expiresIn: '1w',
-     })
-     
-
-     const userUpdated = await userModel.findOneAndUpdate(
-        
+    });
+          
+    const userUpdated = await userModel.findOneAndUpdate(               
         {email},
-        
         {
             token,
             isActive: true,
         },
         {new: true},
-     )
-     res.status(200).json({message: 'Login Success', userUpdated})
-})
+    );
+     
+    return c.json({message: 'Login Success', userUpdated}, 200);
+});
 
-export const logout = async (req, res, next) => {
+
+
+export const logout = catchError(async (c) => {
     try {
-      const { token } = req.body;
+      const { token } = c.req.json();
       if (!token) {
-        return res.status(400).json({ message: "Token is required" });
+        throw new CustomError('Token is required', 404)
       }
   
       let decoded;
@@ -137,7 +142,7 @@ export const logout = async (req, res, next) => {
       console.error("Logout Error:", error);
       res.status(500).json({ message: "Internal server error" });
     }
-  };
+  });
 
 
 export const getAllUser = async(req,res,next) => {

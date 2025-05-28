@@ -5,5 +5,3 @@ export default class CustomError extends Error {
         this.cause = statusCode;
     }
 }
-
-

@@ -3,43 +3,35 @@ import CustomError from '../utilities/customError.js'
 
 
 export default function catchError(callBack) {
-    return (req, res, next) => {
-        callBack(req, res, next).catch(err => {
-            // If err is already a CustomError, pass it through
+    return async (c, next) => {
+        try {
+            return await callBack(c, next);
+        } catch (err) {
+            // If err is already a CustomError, use its status code
             if (err instanceof CustomError) {
-                return next(err);
+                return c.json({ message: err.message }, err.statusCode);
             }
-            // Otherwise create new CustomError
-            next(new CustomError(err.message || err, 400));
-        });
+            // Otherwise create new CustomError and return generic error
+            return c.json({ message: err.message || 'Internal Server Error' }, 500);
+        }
     };
 }
 
 
 
-export const globalResponse = (err, req, res, next) => {
-    if (err) {
-    //   console.log(req.validationErrors)
-    //   console.log("globalResponse");
-      
-      if (req.validationErrors) {
-        return res
-          .status(err['cause'] || 500)
-          .json({ error: req.validationErrors })
-      }
-      return res.status(err['cause'] || 500).json({ message: err.message })
+
+// Global error handler middleware for Hono
+export const globalErrorHandler = async (c, next) => {
+    try {
+        await next();
+    } catch (err) {
+        console.error('Global error:', err);
+        
+        if (err instanceof CustomError) {
+            return c.json({ message: err.message }, err.statusCode);
+        }
+        
+        return c.json({ message: 'Internal Server Error' }, 500);
     }
-  }
+};
   
-  
-//   export const globalResponse = (err, req, res, next) => {
-//     if (err) {
-//         const statusCode = err.statusCode || err.cause || 500;
-        
-//         if (req.validationErrors) {
-//             return res.status(statusCode).json({ error: req.validationErrors });
-//         }
-        
-//         return res.status(statusCode).json({ message: err.message });
-//     }
-// };
