@@ -6,17 +6,18 @@ import { serve } from '@hono/node-server'
 import userRouter from './src/module/auth/auth.routes.js'
 import color from "@colors/colors"
 import { logger } from 'hono/logger'
-import morgan from 'morgan'
+import { globalErrorHandler } from './src/middleware/ErrorHandeling.js'
 
 config({path:path.resolve('./config/.env')})
 const app = new Hono()
+const hono = new Hono()
 const port = process.env.PORT
 
 
 
-app.use(morgan('dev')) // Optional: for logging requests
-app.route("/auth",userRouter)
+app.use('*', globalErrorHandler)
 app.use('*', logger()) // Optional: for logging requests
+app.route("/auth",userRouter)
 
 databaseConnection()
 
