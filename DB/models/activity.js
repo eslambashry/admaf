@@ -42,3 +42,6 @@ const activitySchema = new Schema(
   },
   { timestamps: true }
 );
+
+
+export const ActivityModel = model("Activity", activitySchema);
